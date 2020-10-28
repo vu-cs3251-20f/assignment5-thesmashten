@@ -12,16 +12,15 @@
 #ifndef VECTOR_H
 #define VECTOR_H
 
-#include <string>
 #include <iostream>
 #include <iterator>
+#include <string>
 
 template <uint32_t DIM> class Iterator;
 template <uint32_t DIM> class ConstIterator;
 
 template <uint32_t DIM> class Vector {
 public:
-
     /**
      * Initializes a Default Vector of zeroes.
      * This operation provides strong exception safety.
@@ -29,11 +28,17 @@ public:
     Vector() noexcept;
 
     /**
+     * Initializes a Default Vector according to arr.
+     * This operation provides strong exception safety.
+     */
+    explicit Vector(const double* arr) noexcept;
+
+    /**
      * Initializes the Vector to be a copy of src.
      * This operation provides strong exception safety.
      * @param src Vector to copy passed by reference
      */
-    Vector(const Vector<DIM>& src) noexcept;
+    Vector(const Vector<DIM>& src) noexcept = default;
 
     /**
      * Makes this Vector a copy of rhs using the same guidelines as the copy
@@ -43,13 +48,7 @@ public:
      * @param rhs Vector to copy
      * @return *this, used for chaining.
      */
-    Vector<DIM>& operator=(const Vector<DIM>& rhs);
-
-    /**
-     * Initializes a vector object with the data stored in the passed-in array 'arr'
-     * @param pointer to an array of doubles
-     */
-    Vector(const double* arr) noexcept;
+    Vector<DIM>& operator=(const Vector<DIM>& rhs) = default;
 
     /**
      * Prints a string representation of the console.
@@ -82,20 +81,20 @@ public:
     double norm() const noexcept;
 
     /**
-    * Helps calculate the norm of a vector by calculating the squared magnitude
-    * This operation provides strong exception safety.
-    * @param  none
-    * @return double representing the magnitude of the vector
-    */
+     * Helps calculate the norm of a vector by calculating the squared magnitude
+     * This operation provides strong exception safety.
+     * @param  none
+     * @return double representing the magnitude of the vector
+     */
     double normSq() const noexcept;
 
     /**
-    * Returns a normalized version of the Vector object
-    * This operation provides strong exception safety.
-    * @param  none
-    * @return Vector object that is normalized
-    */
-    Vector<DIM> normalize() const noexcept;
+     * Returns a normalized version of the Vector object
+     * This operation provides strong exception safety.
+     * @param  none
+     * @return Vector object that is normalized
+     */
+    Vector<DIM> normalize() const;
 
     /**
      * Returns an iterator to the end of the arr.
@@ -130,27 +129,27 @@ public:
     double* begin() const noexcept;
 
     /**
-      * Adds two vector objects together mathematically and returns the resulting object
-      * This operation provides strong exception safety.
-      * @param  rhs Vector to be added
-      * @return Vector obj representing sum of last two Vectors
-      */
+     * Adds two vector objects together mathematically and returns the resulting object
+     * This operation provides strong exception safety.
+     * @param  rhs Vector to be added
+     * @return Vector obj representing sum of last two Vectors
+     */
     Vector<DIM> add(const Vector<DIM> rhs) const noexcept;
 
     /**
-      * Inverts elements in a Vector obj
-      * This operation provides strong exception safety.
-      * @param  none
-      * @return Vector obj representing inversion of object called on
-      */
+     * Inverts elements in a Vector obj
+     * This operation provides strong exception safety.
+     * @param  none
+     * @return Vector obj representing inversion of object called on
+     */
     Vector<DIM> invert() const noexcept;
 
     /**
-      * Scales elements on a particular vector by the param val
-      * This operation provides strong exception safety.
-      * @param  val
-      * @return Vector obj representing scaling of Vector called on
-      */
+     * Scales elements on a particular vector by the param val
+     * This operation provides strong exception safety.
+     * @param  val
+     * @return Vector obj representing scaling of Vector called on
+     */
     Vector<DIM> scale(const double& val) const noexcept;
 
     /**
@@ -196,7 +195,7 @@ public:
      * @param scale
      * @return scaled vector by factor of num
      */
-    Vector<DIM> operator*=(const double scale) noexcept;
+    // Vector<DIM> operator*=(const double scale) noexcept;
 
     /**
      * Operator overloaded for multiplying a Vector object by another via dot product
@@ -227,19 +226,19 @@ public:
     Vector<DIM> operator-=(const Vector<DIM>& rhs) noexcept;
 
     /**
-      * Adds two vector objects together mathematically and returns the resulting object
-      * This operation provides strong exception safety.
-      * @param  rhs Vector to be added
-      * @return Vector obj representing sum of last two Vectors
-      */
+     * Adds two vector objects together mathematically and returns the resulting object
+     * This operation provides strong exception safety.
+     * @param  rhs Vector to be added
+     * @return Vector obj representing sum of last two Vectors
+     */
     Vector<DIM> operator+(const Vector<DIM>& rhs) const;
 
     /**
-      * Adds two vector objects together mathematically and returns the resulting object
-      * This operation provides strong exception safety.
-      * @param  rhs Vector to be added
-      * @return Vector obj representing sum of last two Vectors
-      */
+     * Adds two vector objects together mathematically and returns the resulting object
+     * This operation provides strong exception safety.
+     * @param  rhs Vector to be added
+     * @return Vector obj representing sum of last two Vectors
+     */
     Vector<DIM> operator+=(const Vector<DIM>& rhs) noexcept;
 
     /**
@@ -266,19 +265,9 @@ public:
      */
     Vector<DIM> operator^(const Vector<DIM>& rhs) const;
 
-    template <uint32_t X> friend Vector<X> operator*(double lhs, Vector<X> rhs)
-        {return rhs.scale(lhs);};
-
-    template <uint32_t X> friend Vector<X> operator*(Vector<X> vec, double rhs)
-        {return vec.scale(rhs);}
-
-
-
 private:
     double arr[DIM];
-    int mSize;
 };
-
 
 #include "../src/Vector.cpp"
 #endif

@@ -11,69 +11,35 @@
 
 #ifndef VECTOR_CPP
 #define VECTOR_CPP
-#include <cstddef>
-#include <string>
-#include <iterator>
-#include <string>
-#include <algorithm>
-#include <sstream>
-#include <array>
-#include <iostream>
-#include <cmath>
 #include "../include/Vector.h"
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstddef>
+#include <iostream>
+#include <iterator>
+#include <sstream>
+#include <string>
 
-/*
-template<class InputIt1, class InputIt2, class T> class sum_product {
-public:
-    sum_product() : product(0) {}
-    T& operator()(InputIt1 first1, InputIt1 last1,
-                    InputIt2 first2, T init){
-        {
-            while (first1 != last1) {
-                init *= (*first1 * *first2); // std::move since C++20
-                ++first1;
-                ++first2;
-            }
-            return init;
-        }
-    }
-
-private:
-    double product;
-};
- */
-
-
-
-
-template <uint32_t DIM>
-Vector<DIM> :: Vector() noexcept : mSize(DIM){
+template <uint32_t DIM> Vector<DIM>::Vector() noexcept
+{
     std::fill(begin(), end(), 0);
 }
 
-template <uint32_t DIM>
-Vector<DIM> :: Vector(const Vector<DIM>& src) noexcept {
-    mSize = src.mSize;
-    std::copy(src.begin(), src.end(), arr);
+template <uint32_t DIM> Vector<DIM>::Vector(const double* arr) noexcept
+{
+    std::copy(arr, arr + DIM, begin());
 }
 
-template <uint32_t DIM>
-Vector<DIM>& Vector<DIM> :: operator=(const Vector<DIM>& rhs) {
-    mSize = rhs.mSize;
-    std::copy(rhs.begin(), rhs.end(), arr);
-    return *this;
-}
-
-
-template <uint32_t DIM>
-std::string Vector<DIM> :: toString() const noexcept{
+template <uint32_t DIM> std::string Vector<DIM>::toString() const noexcept
+{
     std::string ret = "";
-    if (mSize != 0) {
+    if (DIM != 0) {
         ret += "[";
-        std::ostringstream oss;
-        std::copy(begin(), end() - 1, std::ostream_iterator<double>(oss, ","));
-        oss << end(); //add last element separately to avoid trailing comma
-        ret += oss.str();
+        std::ostringstream stream;
+        std::copy(begin(), end(), std::ostream_iterator<double>(stream, " "));
+        ret += stream.str();
+        ret = ret.substr(0, ret.length() - 1);
         ret += "]";
     }
     return ret;
@@ -84,18 +50,17 @@ std::string Vector<DIM> :: toString() const noexcept{
  * @param src Vector object
  * @return double representing dot product of the vector
  */
-//FOR TRANSFORM:
-//param1 = start, param2 = end, param3 = beginning of second to transform, param4 = destination range
-//param5 = function call
-template <uint32_t DIM>
-double Vector<DIM> :: dot(const Vector<DIM> src) const noexcept{
+// FOR TRANSFORM:
+// param1 = start, param2 = end, param3 = beginning of second to transform, param4 = destination
+// range param5 = function call
+template <uint32_t DIM> double Vector<DIM>::dot(const Vector<DIM> src) const noexcept
+{
     double ret = 0;
     Vector<DIM> products;
-    std::transform(begin(), end(), src.begin(), products.begin(),
-        [&ret](auto lhs, auto rhs) {
-            double product = lhs * rhs;
-            ret += product;
-            return product;
+    std::transform(begin(), end(), src.begin(), products.begin(), [&ret](auto lhs, auto rhs) {
+        double product = lhs * rhs;
+        ret += product;
+        return product;
     });
     return ret;
 }
@@ -106,19 +71,19 @@ double Vector<DIM> :: dot(const Vector<DIM> src) const noexcept{
  * @param rhs Vector object
  * @return another vector of dimension DIM containing the cross product of this and src
  */
-template<> Vector<3> Vector<3> :: cross(const Vector<3> rhs) const{
+template <> Vector<3> Vector<3>::cross(const Vector<3> rhs) const
+{
     Vector<3> crossProd;
-    crossProd[0] = (arr[1] * rhs[2]) - (arr[2] * rhs[1]);
     crossProd[1] = (arr[2] * rhs[0]) - (arr[0] * rhs[2]);
+    crossProd[0] = (arr[1] * rhs[2]) - (arr[2] * rhs[1]);
     crossProd[2] = (arr[0] * rhs[1]) - (arr[1] * rhs[0]);
     return crossProd;
 }
 
-template <uint32_t DIM>
-Vector<DIM> Vector<DIM> :: cross(const Vector<DIM>) const{
-    throw std :: domain_error("Invalid dimensions for this vector.");
+template <uint32_t DIM> Vector<DIM> Vector<DIM>::cross(const Vector<DIM>) const
+{
+    throw std ::domain_error("Invalid dimensions for this vector.");
 }
-
 
 /**
  * Calculates the norm, or magnitude of the lhs object
@@ -127,35 +92,37 @@ Vector<DIM> Vector<DIM> :: cross(const Vector<DIM>) const{
  * @param  none
  * @return double representing the magnitude of the vector
  */
-template <uint32_t DIM>
-double Vector<DIM> :: norm() const noexcept{
+template <uint32_t DIM> double Vector<DIM>::norm() const noexcept
+{
     return sqrt(normSq());
 }
 
 /**
-* Helps calculate the norm of a vector by calculating the squared magnitude
-* This operation provides strong exception safety.
-* @param  none
-* @return double representing the magnitude of the vector
-*/
-template <uint32_t DIM>
-double Vector<DIM> :: normSq() const noexcept{
+ * Helps calculate the norm of a vector by calculating the squared magnitude
+ * This operation provides strong exception safety.
+ * @param  none
+ * @return double representing the magnitude of the vector
+ */
+template <uint32_t DIM> double Vector<DIM>::normSq() const noexcept
+{
     Vector<DIM> squared;
     double sqNum = 0;
-    std::transform(begin(), end(), squared.begin(),
-                   [&sqNum](double d) -> double { return sqNum *= d;});
-    return squared[mSize - 1];
+    std::transform(begin(), end(), squared.begin(), [&sqNum](double d) -> double {
+        sqNum += d * d;
+        return sqNum;
+    });
+    return sqNum;
 }
 
 /**
-* Returns a normalized version of the Vector object
-* This operation provides strong exception safety.
-* @param  none
-* @return Vector object that is normalized
-*/
-template <uint32_t DIM>
-Vector<DIM> Vector<DIM> :: normalize() const noexcept{
-    return scale(1/norm());
+ * Returns a normalized version of the Vector object
+ * This operation provides strong exception safety.
+ * @param  none
+ * @return Vector object that is normalized
+ */
+template <uint32_t DIM> Vector<DIM> Vector<DIM>::normalize() const
+{
+    return scale(1 / norm());
 }
 
 /**
@@ -164,9 +131,9 @@ Vector<DIM> Vector<DIM> :: normalize() const noexcept{
  * @param: none
  * @return iterator
  */
-template <uint32_t DIM>
-double* Vector<DIM> :: end() noexcept{
-    double* ptr = const_cast<double*>(arr + mSize);
+template <uint32_t DIM> double* Vector<DIM>::end() noexcept
+{
+    double* ptr = const_cast<double*>(arr + DIM);
     return ptr;
 }
 
@@ -176,9 +143,9 @@ double* Vector<DIM> :: end() noexcept{
  * @param: none
  * @return const double*
  */
-template <uint32_t DIM>
-double* Vector<DIM> :: end() const noexcept{
-    double* ptr = const_cast<double*>(arr + mSize);
+template <uint32_t DIM> double* Vector<DIM>::end() const noexcept
+{
+    double* ptr = const_cast<double*>(arr + DIM);
     return ptr;
 }
 
@@ -188,8 +155,8 @@ double* Vector<DIM> :: end() const noexcept{
  * @param: none
  * @return iterator to the beginning of the Vector
  */
-template <uint32_t DIM>
-double* Vector<DIM> :: begin() noexcept{
+template <uint32_t DIM> double* Vector<DIM>::begin() noexcept
+{
     double* ptr = const_cast<double*>(arr);
     return ptr;
 }
@@ -200,45 +167,50 @@ double* Vector<DIM> :: begin() noexcept{
  * @param: none
  * @return const_iterator to beginning of the Vector
  */
-template <uint32_t DIM>
-double* Vector<DIM> :: begin() const noexcept{
+template <uint32_t DIM> double* Vector<DIM>::begin() const noexcept
+{
     double* ptr = const_cast<double*>(arr);
     return ptr;
 }
 
 /**
-  * Adds two vector objects together mathematically and returns the resulting object
-  * This operation provides strong exception safety.
-  * @param  rhs Vector to be added
-  * @return Vector obj representing sum of last two Vectors
-  */
-template <uint32_t DIM>
-Vector<DIM> Vector<DIM>::add(const Vector<DIM> rhs) const noexcept{
-    return rhs;
+ * Adds two vector objects together mathematically and returns the resulting object
+ * This operation provides strong exception safety.
+ * @param  rhs Vector to be added
+ * @return Vector obj representing sum of last two Vectors
+ */
+template <uint32_t DIM> Vector<DIM> Vector<DIM>::add(const Vector<DIM> rhs) const noexcept
+{
+    Vector<DIM> tmp;
+    auto lAdd = [](double i, double j) { return i + j; };
+    std::transform(rhs.begin(), rhs.end(), begin(), tmp.begin(), lAdd);
+    return tmp;
 }
 
 /**
-  * Inverts elements in a Vector obj. Basically the same as scale() but for -1
-  * This operation provides strong exception safety.
-  * @param  none
-  * @return Vector obj representing inversion of object called on
-  */
-template <uint32_t DIM>
-Vector<DIM> Vector<DIM> :: invert() const noexcept{
+ * Inverts elements in a Vector obj. Basically the same as scale() but for -1
+ * This operation provides strong exception safety.
+ * @param  none
+ * @return Vector obj representing inversion of object called on
+ */
+template <uint32_t DIM> Vector<DIM> Vector<DIM>::invert() const noexcept
+{
     return scale(-1);
 }
 
 /**
-  * Scales elements on a particular vector by the param val
-  * This operation provides strong exception safety.
-  * @param  val
-  * @return Vector obj representing scaling of Vector called on
-  */
-template <uint32_t DIM>
-Vector<DIM> Vector<DIM> :: scale(const double& val) const noexcept {
-    Vector<DIM> result;
-    std::transform(begin(), end(), result.begin(),
-                   [&val](double d) -> double { return d * val;});
+ * Scales elements on a particular vector by the param val
+ * This operation provides strong exception safety.
+ * @param  val
+ * @return Vector obj representing scaling of Vector called on
+ */
+template <uint32_t DIM> Vector<DIM> Vector<DIM>::scale(const double& val) const noexcept
+{
+    Vector<DIM> result(*this);
+    std::transform(begin(), end(), result.begin(), [&val](double d) -> double {
+        d *= val;
+        return d;
+    });
     return result;
 }
 
@@ -247,8 +219,8 @@ Vector<DIM> Vector<DIM> :: scale(const double& val) const noexcept {
  * @param index
  * @return the value at index in the Vector
  */
-template <uint32_t DIM>
-double& Vector<DIM> :: operator[](const uint32_t index){
+template <uint32_t DIM> double& Vector<DIM>::operator[](const uint32_t index)
+{
     return arr[index];
 }
 
@@ -257,8 +229,8 @@ double& Vector<DIM> :: operator[](const uint32_t index){
  * @param index
  * @return the value at index in the Vector
  */
-template <uint32_t DIM>
-const double& Vector<DIM> :: operator[](const uint32_t index) const{
+template <uint32_t DIM> const double& Vector<DIM>::operator[](const uint32_t index) const
+{
     return arr[index];
 }
 
@@ -269,9 +241,13 @@ const double& Vector<DIM> :: operator[](const uint32_t index) const{
  * @param rhs the Vector being compared to
  * @return true iff logically equivalent
  */
-template <uint32_t DIM>
-bool Vector<DIM> :: operator==(const Vector<DIM>& rhs) const noexcept{
-    return toString() == rhs.toString();
+template <uint32_t DIM> bool Vector<DIM>::operator==(const Vector<DIM>& rhs) const noexcept
+{
+    bool equal = std::equal(begin(), end(), rhs.begin(), [](auto lhs, auto rhs) {
+        double epsilon = 0.01;
+        return std::abs(lhs - rhs) < epsilon;
+    });
+    return equal;
 }
 
 /**
@@ -280,8 +256,8 @@ bool Vector<DIM> :: operator==(const Vector<DIM>& rhs) const noexcept{
  * @param rhs the Vector being compared to
  * @return true iff not logically equivalent
  */
-template <uint32_t DIM>
-bool Vector<DIM> :: operator!=(const Vector<DIM>& rhs) const noexcept{
+template <uint32_t DIM> bool Vector<DIM>::operator!=(const Vector<DIM>& rhs) const noexcept
+{
     return !(this->operator==(rhs));
 }
 
@@ -290,20 +266,9 @@ bool Vector<DIM> :: operator!=(const Vector<DIM>& rhs) const noexcept{
  * @param scale
  * @return scaled vector by factor of num
  */
-template <uint32_t DIM>
-Vector<DIM> Vector<DIM> :: operator*(const double factor) noexcept{
+template <uint32_t DIM> Vector<DIM> Vector<DIM>::operator*(const double factor) noexcept
+{
     Vector result = this->scale(factor);
-    return result;
-}
-
-/**
- * Operator overloaded for scaling a Vector by another number (allows vec1 *= 2)
- * @param scale
- * @return scaled vector by factor of num
- */
-template <uint32_t DIM>
-Vector<DIM> Vector<DIM> :: operator*=(const double factor) noexcept{
-    Vector result = scale(factor);
     return result;
 }
 
@@ -312,9 +277,9 @@ Vector<DIM> Vector<DIM> :: operator*=(const double factor) noexcept{
  * @param rhs Vector obj
  * @return double representing the dot product
  */
-template <uint32_t DIM>
-double Vector<DIM> :: operator*(const Vector<DIM>& rhs) noexcept{
-    return this->dot(rhs);
+template <uint32_t DIM> double Vector<DIM>::operator*(const Vector<DIM>& rhs) noexcept
+{
+    return dot(rhs);
 }
 
 /**
@@ -322,11 +287,11 @@ double Vector<DIM> :: operator*(const Vector<DIM>& rhs) noexcept{
  * @param rhs Vector obj
  * @return Vector representing subtraction
  */
-template <uint32_t DIM>
-Vector<DIM> Vector<DIM> :: operator-(const Vector<DIM>& rhs) const noexcept{
-    Vector storage;
-    std::transform(begin(), end(), rhs.begin(), storage.begin(), std::minus());
-    return storage;
+template <uint32_t DIM> Vector<DIM> Vector<DIM>::operator-(const Vector<DIM>& rhs) const noexcept
+{
+    rhs.invert();
+    Vector<DIM> tmp = add(rhs);
+    return tmp;
 }
 
 /**
@@ -334,8 +299,8 @@ Vector<DIM> Vector<DIM> :: operator-(const Vector<DIM>& rhs) const noexcept{
  * @param: none
  * @return new Vector that is inversion of last
  */
-template <uint32_t DIM>
-Vector<DIM> Vector<DIM> :: operator-() const noexcept{
+template <uint32_t DIM> Vector<DIM> Vector<DIM>::operator-() const noexcept
+{
     Vector<DIM> result = invert();
     return result;
 }
@@ -345,21 +310,21 @@ Vector<DIM> Vector<DIM> :: operator-() const noexcept{
  * @param rhs Vector obj
  * @return subtracted Vector
  */
-template <uint32_t DIM>
-Vector<DIM> Vector<DIM> :: operator-=(const Vector<DIM>& rhs) noexcept{
+template <uint32_t DIM> Vector<DIM> Vector<DIM>::operator-=(const Vector<DIM>& rhs) noexcept
+{
     rhs.invert();
     Vector result = add(rhs);
     return result;
 }
 
 /**
-  * Adds two vector objects together mathematically and returns the resulting object
-  * This operation provides strong exception safety.
-  * @param  rhs Vector to be added
-  * @return Vector obj representing sum of last two Vectors
-  */
-template <uint32_t DIM>
-Vector<DIM> Vector<DIM> :: operator+(const Vector<DIM>& rhs) const{
+ * Adds two vector objects together mathematically and returns the resulting object
+ * This operation provides strong exception safety.
+ * @param  rhs Vector to be added
+ * @return Vector obj representing sum of last two Vectors
+ */
+template <uint32_t DIM> Vector<DIM> Vector<DIM>::operator+(const Vector<DIM>& rhs) const
+{
     Vector tmp(rhs);
     Vector tmp2(*this);
     Vector result = tmp2.add(tmp);
@@ -367,13 +332,13 @@ Vector<DIM> Vector<DIM> :: operator+(const Vector<DIM>& rhs) const{
 }
 
 /**
-  * Adds two vector objects together mathematically and returns the resulting object
-  * This operation provides strong exception safety.
-  * @param  rhs Vector to be added
-  * @return Vector obj representing sum of last two Vectors
-  */
-template <uint32_t DIM>
-Vector<DIM> Vector<DIM> :: operator+=(const Vector<DIM>& rhs) noexcept{
+ * Adds two vector objects together mathematically and returns the resulting object
+ * This operation provides strong exception safety.
+ * @param  rhs Vector to be added
+ * @return Vector obj representing sum of last two Vectors
+ */
+template <uint32_t DIM> Vector<DIM> Vector<DIM>::operator+=(const Vector<DIM>& rhs) noexcept
+{
     return this->add(rhs);
 }
 
@@ -382,8 +347,8 @@ Vector<DIM> Vector<DIM> :: operator+=(const Vector<DIM>& rhs) noexcept{
  * @param scale
  * @return Vector obj that has been scaled accordingly
  */
-template <uint32_t DIM>
-Vector<DIM> Vector<DIM> :: operator/(const double factor) noexcept{
+template <uint32_t DIM> Vector<DIM> Vector<DIM>::operator/(const double factor) noexcept
+{
     Vector result = scale(factor);
     return result;
 }
@@ -393,9 +358,9 @@ Vector<DIM> Vector<DIM> :: operator/(const double factor) noexcept{
  * @param scale
  * @return Vector obj that has been scaled accordingly
  */
-template <uint32_t DIM>
-Vector<DIM> Vector<DIM> :: operator/= (const double factor){
-    Vector result = scale(1/factor);
+template <uint32_t DIM> Vector<DIM> Vector<DIM>::operator/=(const double factor)
+{
+    Vector result = scale(1 / factor);
     return result;
 }
 
@@ -407,20 +372,30 @@ Vector<DIM> Vector<DIM> :: operator/= (const double factor){
  * @returns cross product for 3D vectors
  * @throws std::invalid argument for non 3D vectors
  */
-template <uint32_t DIM>
-Vector<DIM> Vector<DIM> :: operator^(const Vector<DIM>& rhs) const{
-    if (DIM == 3 || DIM == 7){
+template <uint32_t DIM> Vector<DIM> Vector<DIM>::operator^(const Vector<DIM>& rhs) const
+{
+    if (DIM == 3 || DIM == 7) {
         return cross(rhs);
-    }
-    else {
+    } else {
         throw std::invalid_argument("Invalid Argument.");
     }
 }
 
-
-
-
-
-
+template <uint32_t X> Vector<X> operator*=(double rhs, Vector<X> vec)
+{
+    return vec.scale(rhs);
+}
+template <uint32_t X> Vector<X> operator*(Vector<X> vec, double rhs)
+{
+    return vec.scale(rhs);
+}
+template <uint32_t X> Vector<X> operator*(double lhs, Vector<X> rhs)
+{
+    return rhs.scale(lhs);
+}
+template <uint32_t X> Vector<X> operator*=(Vector<X> vec, double rhs)
+{
+    return vec.scale(rhs);
+}
 
 #endif
